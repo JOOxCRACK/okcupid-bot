@@ -3,8 +3,8 @@ import undetected_chromedriver as uc
 import time
 import os
 
-# توكن البوت من متغير البيئة
-TOKEN = os.environ.get("8185073049:AAEY7SPjWPE9bYIo2zZ4OvYEw0zAAVFxWkw")
+# جلب التوكن من متغير البيئة
+TOKEN = os.environ.get("TOKEN")
 
 ASK_CREDENTIALS = 1
 
@@ -28,12 +28,12 @@ def get_credentials(update, context):
         driver.get("https://okcupid.com/login")
         time.sleep(5)
 
-        email_input = driver.find_element("name", "username")
-        password_input = driver.find_element("name", "password")
+        email_input = driver.find_element_by_name("username")
+        password_input = driver.find_element_by_name("password")
         email_input.send_keys(email)
         password_input.send_keys(password)
 
-        login_btn = driver.find_element("xpath", "//button[@type='submit']")
+        login_btn = driver.find_element_by_xpath("//button[@type='submit']")
         login_btn.click()
 
         time.sleep(7)
@@ -55,17 +55,22 @@ def cancel(update, context):
     update.message.reply_text("تم الإلغاء.")
     return ConversationHandler.END
 
-updater = Updater(TOKEN)
-dp = updater.dispatcher
+def main():
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-conv_handler = ConversationHandler(
-    entry_points=[CommandHandler('login', login)],
-    states={ASK_CREDENTIALS: [MessageHandler(Filters.text & ~Filters.command, get_credentials)]},
-    fallbacks=[CommandHandler('cancel', cancel)],
-)
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('login', login)],
+        states={ASK_CREDENTIALS: [MessageHandler(Filters.text & ~Filters.command, get_credentials)]},
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
 
-dp.add_handler(CommandHandler('start', start))
-dp.add_handler(conv_handler)
+    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(conv_handler)
 
-updater.start_polling()
-updater.idle()
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
+
