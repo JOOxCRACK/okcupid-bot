@@ -11,7 +11,7 @@ HEADERS = {
     "x-okcupid-platform": "ios",
     "Content-Type": "application/json",
     "Accept": "application/json",
-    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjb3JlYXBpIiwiYXVkIjoiY29yZWFwaSIsInBsYXRmb3JtSWQiOjExMSwic2Vzc2lvbklkIjoiODMxMDUwN2QtNDA3Ni00ZDMyLTkyODMtNTZkYTUyM2Y1NTVlIiwic2l0ZUNvZGUiOjM2LCJTZXJ2ZXJJZCI6NzgsInZlciI6MTIsImlzc1NyYyI6MjcsImVudiI6MSwic2NvcGUiOlsxXSwiYXV0aF90aW1lIjpudWxsLCJpYXQiOjE3NTI0OTMyMTEsImV4cCI6MTc1MjQ5NTkxMX0.z2zF6XN6UVrq_oMX6-s-XVIm9WgDzmPs2qJpscrw1V4",  # لو مش ضروري شيله أو حدّثه
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjb3JlYXBpIiwiYXVkIjoiY29yZWFwaSIsInBsYXRmb3JtSWQiOjExMSwic2Vzc2lvbklkIjoiODMxMDUwN2QtNDA3Ni00ZDMyLTkyODMtNTZkYTUyM2Y1NTVlIiwic2l0ZUNvZGUiOjM2LCJTZXJ2ZXJJZCI6NzgsInZlciI6MTIsImlzc1NyYyI6MjcsImVudiI6MSwic2NvcGUiOlsxXSwiYXV0aF90aW1lIjpudWxsLCJpYXQiOjE3NTI0OTMyMTEsImV4cCI6MTc1MjQ5NTkxMX0.z2zF6XN6UVrq_oMX6-s-XVIm9WgDzmPs2qJpscrw1V4",  # لو مش ضروري شيله
     "x-okcupid-locale": "en",
     "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
     "x-okcupid-auth-v": "1",
@@ -54,11 +54,17 @@ def get_credentials(update, context):
             data=json.dumps(payload)
         )
 
-        data = response.json()
-        if data.get("data") and data["data"].get("authEmailLogin") and data["data"]["authEmailLogin"]["status"] == "SUCCESS":
-            update.message.reply_text("✅ تم تسجيل الدخول بنجاح!\nToken: " + data["data"]["authEmailLogin"]["token"])
+        # طباعة الرد الكامل
+        response_json = json.dumps(response.json(), indent=2)
+        if len(response_json) > 4000:
+            update.message.reply_text("📦 الرد طويل، هبعتلك كملف...")
+            with open("response.json", "w") as f:
+                f.write(response_json)
+            with open("response.json", "rb") as f:
+                update.message.reply_document(f, filename="response.json")
         else:
-            update.message.reply_text("❌ فشل تسجيل الدخول. البيانات غير صحيحة أو تم حظرك.")
+            update.message.reply_text(f"📦 Response:\n```json\n{response_json}```", parse_mode='Markdown')
+
     except Exception as e:
         update.message.reply_text(f"🚫 حصل خطأ: {str(e)}")
 
@@ -73,4 +79,17 @@ def main():
     dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
-        entry_poin_
+        entry_points=[CommandHandler("login", login)],
+        states={ASK_CREDENTIALS: [MessageHandler(Filters.text & ~Filters.command, get_credentials)]},
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(conv_handler)
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
+
