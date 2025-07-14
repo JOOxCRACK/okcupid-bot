@@ -1,0 +1,10 @@
+services:
+  - type: worker
+    name: okcupid-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: TOKEN
+        value: 8185073049:AAEY7SPjWPE9bYIo2zZ4OvYEw0zAAVFxWkw
